@@ -13,8 +13,8 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
 {
     public class OutageController : ApiController
     {
-        [HttpGet]
-        [ActionName("getProblems")]
+        [HttpGet]       
+        [Route("getProblems")]
         public HttpResponseMessage getProblems()
         {
             try
@@ -37,11 +37,11 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
 
                 var json = new JavaScriptSerializer().Serialize(list);
 
-                return Request.CreateResponse(HttpStatusCode.OK, json);
+                return Request.CreateResponse(HttpStatusCode.OK, json);         
             }
             catch (Exception e)
             {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.Message);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.InnerException +":" + e.StackTrace + ":" + e.Message);
             }
         }
     }
