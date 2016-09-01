@@ -80,11 +80,11 @@ namespace ServiceNowNewsAndNotificationsAPI
                 }
 
                 inc.IncidentNum = Convert.ToString(rec["number"]); //incident number
-                inc.IncidentStatus = statusValue; //New, Active, Awaiting Problem, Awawiting User Info, Resolved, Closed
+                inc.IncidentStatus = (statusValue == "Awaiting Problem") ? "Related" : statusValue; //New, Active, Awaiting Problem, Awawiting User Info, Resolved, Closed
                 inc.OutageStartDateTime = (incStartDate != string.Empty) ? incStartDate : ""; //outage start datetime
                 inc.OutageEndDateTime = (incEndDate != string.Empty) ? incEndDate : "";//outage end datetime
                 inc.OutageScope = Convert.ToString(rec["u_outage_scope"]); //outage scope [critical or not]
-                inc.OutageType = (inc.IncidentStatus == "Awaiting Problem") ? "Related" : Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
+                inc.OutageType = Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
                 inc.ShortDescription = Convert.ToString(rec["short_description"]); //short description
                 inc.CreatedDt = incCreatedDate; //open date
                 inc.OutageStartDt = outageStartDate;
@@ -165,7 +165,11 @@ namespace ServiceNowNewsAndNotificationsAPI
                 var relatedIncs = incidentList.Where(x => x.ProblemId == p.SysId);
                 if (relatedIncs.Count() > 0)
                 {
-                    p.Incidents.AddRange(relatedIncs);
+                    foreach (var inc in relatedIncs)
+                    {
+                        inc.ProblemNum = p.ProblemNum;
+                    }
+                   p.Incidents.AddRange(relatedIncs);
                 }
             }
 
@@ -184,12 +188,16 @@ namespace ServiceNowNewsAndNotificationsAPI
                     ShortDescription = "",
                     CreatedDt = "",
                     SysId = "",
-                    ProblemLink = "",
+                    ProblemLink = "",                    
                     Incidents = unrelatedIncs.ToList()
                 });
             }
                     
-
+            //Assign unrelated incidents' problem num
+            foreach (var unrelatedinc in unrelatedIncs)
+            {
+                unrelatedinc.ProblemNum = "PRBNOPROBLEM";
+            }
 
             return problemList;
         }
