@@ -12,6 +12,8 @@ namespace ServiceNowNewsAndNotificationsAPI
         protected void Application_Start()
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);
+            //Removing the XML Formatter from ASP.Net Web API
+            GlobalConfiguration.Configuration.Formatters.XmlFormatter.SupportedMediaTypes.Clear();
         }
     }
 }
