@@ -10,11 +10,11 @@ using System.Web.Script.Serialization;
 
 
 namespace ServiceNowNewsAndNotificationsAPI.Controllers
-{
+{    
     public class OutageController : ApiController
     {
         [HttpGet]       
-        [Route("getProblems")]
+        [Route("getProblems")]       
         public HttpResponseMessage getProblems()
         {
             try
@@ -33,11 +33,9 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
                 var problemData = webRequest.GetResponse();
 
                 var getData = new ProcessData();
-                var list = getData.DataMassage(incidentData, problemData);
+                var list = getData.DataMassage(incidentData, problemData);              
 
-                var json = new JavaScriptSerializer().Serialize(list);
-
-                return Request.CreateResponse(HttpStatusCode.OK, json);         
+                return Request.CreateResponse(HttpStatusCode.OK, list);         
             }
             catch (Exception e)
             {
