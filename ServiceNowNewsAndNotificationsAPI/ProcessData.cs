@@ -212,15 +212,15 @@ namespace ServiceNowNewsAndNotificationsAPI
             {
                
                     var kb = new Knowledge();
-                    kb.CreatedDt = Convert.ToString(kbItem["sys_created_on"]);
-                    kb.Description =  Convert.ToString(kbItem["text"]);
-                    kb.KBNum =  Convert.ToString(kbItem["number"]);
-                    kb.ShortDescription =  Convert.ToString(kbItem["short_description"]);
-                    kb.SysId =  Convert.ToString(kbItem["sys_id"]);
-                    kb.WorkflowStatus = Convert.ToString(kbItem["workflow_state"]);
+                    kb.CreatedDt = Convert.ToString(kbItem["sys_created_on"]).Trim();
+                    kb.Description = HttpUtility.HtmlDecode(Convert.ToString(kbItem["text"]).Trim());
+                    kb.KBNum = Convert.ToString(kbItem["number"]).Trim();
+                    kb.ShortDescription = Convert.ToString(kbItem["short_description"]).Trim();
+                    kb.SysId = Convert.ToString(kbItem["sys_id"]).Trim();
+                    kb.WorkflowStatus = Convert.ToString(kbItem["workflow_state"]).Trim();
                     kb.KBLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=kb_knowledge.do?sys_id=" + kb.SysId;
-                    kb.PublishedDt = Convert.ToString(kbItem["published"]);
-                    kb.ValidToDt = Convert.ToString(kbItem["valid_to"]);
+                    kb.PublishedDt = Convert.ToString(kbItem["published"]).Trim();
+                    kb.ValidToDt = Convert.ToString(kbItem["valid_to"]).Trim();
                     kbList.Add(kb);                
             }
               
