@@ -94,6 +94,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\Incident.cs" />
+    <Compile Include="Models\Knowledge.cs" />
     <Compile Include="Models\Outage.cs" />
     <Compile Include="Models\Problem.cs" />
     <Compile Include="ProcessData.cs" />
