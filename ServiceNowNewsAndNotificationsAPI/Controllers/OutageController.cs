@@ -42,5 +42,30 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.InnerException +":" + e.StackTrace + ":" + e.Message);
             }
         }
+
+
+         [HttpGet]       
+        [Route("getNews")]       
+        public HttpResponseMessage getNews()
+        {
+            try
+            {
+                //Knowledge URL
+                string kbURL = "https://cityoflaprod.service-now.com/api/now/table/kb_knowledge?sysparm_query=Title%3D%27News%20and%20Outages%27^topic=News&sysparm_limit=10";                                
+
+                // Knowledge Connection
+                ServiceNowRequest webRequest = new ServiceNowRequest(kbURL, "GET");
+                var kbData = webRequest.GetResponse();                
+
+                var getData = new ProcessData();
+                var list = getData.GetNews(kbData);              
+
+                return Request.CreateResponse(HttpStatusCode.OK, list);         
+            }
+            catch (Exception e)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.InnerException +":" + e.StackTrace + ":" + e.Message);
+            }
+        }
     }
 }
