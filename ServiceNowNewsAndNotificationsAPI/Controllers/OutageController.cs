@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -20,11 +21,12 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
             try
             {
                 //Incident URL
-                string incidentURL = "https://cityoflaprod.service-now.com/api/now/table/incident?active=true&u_outage=true";
                 
-                //Problem URL
-                string problemURL = "https://cityoflaprod.service-now.com/api/now/table/problem?active=true&u_outage=true";
+                string incidentURL = ConfigurationManager.AppSettings["IncidentcURL"];
 
+                //Problem URL
+                
+                string problemURL = ConfigurationManager.AppSettings["ProblemcUrl"];
                 // Incident Connection
                 ServiceNowRequest webRequest = new ServiceNowRequest(incidentURL, "GET");
                 var incidentData = webRequest.GetResponse();
@@ -44,14 +46,14 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
         }
 
 
-         [HttpGet]       
+        [HttpGet]       
         [Route("getNews")]       
         public HttpResponseMessage getNews()
         {
             try
             {
                 //Knowledge URL
-                string kbURL = "https://cityoflaprod.service-now.com/api/now/table/kb_knowledge?sysparm_query=Title%3D%27News%20and%20Outages%27^topic=News&sysparm_limit=10";                                
+                string kbURL = ConfigurationManager.AppSettings["NewcURL"];                                
 
                 // Knowledge Connection
                 ServiceNowRequest webRequest = new ServiceNowRequest(kbURL, "GET");
