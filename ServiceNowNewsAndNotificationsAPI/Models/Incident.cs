@@ -22,6 +22,7 @@ namespace ServiceNowNewsAndNotificationsAPI.Models
         public string ProblemLink { get; set; }
         public string IncidentLink { get; set; }
         public string ProblemNum { get; set; }
+        public string cmd_db { get; set; }
 
         public bool IsOutageCritical
         {
