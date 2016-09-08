@@ -193,31 +193,32 @@ namespace ServiceNowNewsAndNotificationsAPI
                 }
             }
 
-            // TODO: Add Incident at top level to problemList
-            var unrelatedIncs = incidentList.Where(w => w.ProblemId == "");
-            if (unrelatedIncs.Count() > 0)
-            {
-                problemList.Add(new Problem()
-                {
-                    ProblemNum = "PRBNOPROBLEM",
-                    OutageStartDateTime = "",
-                    OutageEndDateTime = "",
-                    OutageScope = "",
-                    OutageType = "",
-                    OutageStatus = "",
-                    ShortDescription = "",
-                    CreatedDt = "",
-                    SysId = "",
-                    ProblemLink = "",
-                    Incidents = unrelatedIncs.ToList()
-                });
-            }
+            //// This sectioncommented out to remove incidents that are unrelated to a problem from the feed.
+            //// TODO: Add Incident at top level to problemList
+            //var unrelatedIncs = incidentList.Where(w => w.ProblemId == "");
+            //if (unrelatedIncs.Count() > 0)
+            //{
+            //    problemList.Add(new Problem()
+            //    {
+            //        ProblemNum = "PRBNOPROBLEM",
+            //        OutageStartDateTime = "",
+            //        OutageEndDateTime = "",
+            //        OutageScope = "",
+            //        OutageType = "",
+            //        OutageStatus = "",
+            //        ShortDescription = "",
+            //        CreatedDt = "",
+            //        SysId = "",
+            //        ProblemLink = "",
+            //        Incidents = unrelatedIncs.ToList()
+            //    });
+            //}
 
-            //Assign unrelated incidents' problem num
-            foreach (var unrelatedinc in unrelatedIncs)
-            {
-                unrelatedinc.ProblemNum = "PRBNOPROBLEM";
-            }
+            ////Assign unrelated incidents' problem num
+            //foreach (var unrelatedinc in unrelatedIncs)
+            //{
+            //    unrelatedinc.ProblemNum = "PRBNOPROBLEM";
+            //}
 
             return problemList;
         }
