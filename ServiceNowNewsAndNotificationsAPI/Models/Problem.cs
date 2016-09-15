@@ -21,6 +21,7 @@ namespace ServiceNowNewsAndNotificationsAPI.Models
         public string ShortDescription { get; set; }
         public string CreatedDt { get; set; }
         public string ProblemLink { get; set; }
+        public string ProbSortOrder { get; set; }
 
         public List<Incident> Incidents { get; set; }
 
