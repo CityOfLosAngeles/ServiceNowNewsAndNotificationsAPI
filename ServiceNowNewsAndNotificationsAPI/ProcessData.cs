@@ -155,12 +155,12 @@ namespace ServiceNowNewsAndNotificationsAPI
 
                 }
                 DateTime probEndDate = new DateTime();
-                if (Convert.ToString(rec["closed_at"]) != string.Empty)
+                if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
                 {
-                    probEndDate = Convert.ToDateTime(rec["closed_at"]);
+                    probEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]);
                 }
-                var dateDiff = (DateTime.Now - probEndDate).TotalDays;
-                if (string.IsNullOrWhiteSpace(Convert.ToString(rec["ended_at"])) || dateDiff <= 1)
+                var dateDiff = (prbEndDate != "") ? (DateTime.Now - probEndDate).TotalDays : 10;
+                if (prbEndDate == "" || dateDiff <= 1)
                 {
                     problemList.Add(new Problem()
                     {
@@ -178,15 +178,49 @@ namespace ServiceNowNewsAndNotificationsAPI
                 }
             }
 
+            // Sort the Problem List by Outage Status (Investigating, In Progress, Resolved, and Closed)
+            problemList = problemList.OrderByDescending(p => p.OutageStatus == "Investigating")
+                .ThenByDescending(p => p.OutageStatus == "In progress")
+                .ThenByDescending(p => p.OutageStatus == "Resolved")
+                .ThenByDescending(p => p.OutageStatus == "Closed")
+                .ThenByDescending(p => p.OutageStartDateTime).ToList();
+
+            
+            var problemSort = 1;
+            var incidentSort = 1;
+            var relatedProblemNum = "";
+            
             //Build Problem and Incident RelationShip
             foreach (var p in problemList)
             {
+                // Set Problem Sort Order
+                p.ProbSortOrder = problemSort.ToString();
+                problemSort += 1;
+
                 //find related incident
                 var relatedIncs = incidentList.Where(x => x.ProblemId == p.SysId);
                 if (relatedIncs.Count() > 0)
                 {
+                    // Sort the related Incident List by date and time
+                    relatedIncs = relatedIncs.OrderByDescending(d => d.CreatedDt).ToList();
+
                     foreach (var inc in relatedIncs)
                     {
+                        if (relatedProblemNum != "" && inc.ProblemId != relatedProblemNum)
+                        {
+                            // Reset the Incident sort order
+                            incidentSort = 1;
+                            relatedProblemNum = "";
+                        }
+
+                        // Set the Related Incident Sort Order
+                        if (relatedProblemNum == "" || inc.ProblemId == relatedProblemNum)
+                        {
+                            inc.IncSortOrder = incidentSort.ToString();
+                            incidentSort += 1;
+                            relatedProblemNum = inc.ProblemId;
+                        }
+
                         inc.ProblemNum = p.ProblemNum;
                     }
                     p.Incidents.AddRange(relatedIncs);
@@ -195,9 +229,14 @@ namespace ServiceNowNewsAndNotificationsAPI
 
             //// This sectioncommented out to remove incidents that are unrelated to a problem from the feed.
             //// TODO: Add Incident at top level to problemList
+            //// Reset sort order for incidents
+            //var incidentSort = 1;
             //var unrelatedIncs = incidentList.Where(w => w.ProblemId == "");
             //if (unrelatedIncs.Count() > 0)
             //{
+            //    // Sort the unrelated Incident List by date and time
+            //    unrelatedIncs = unrelatedIncs.OrderByDescending(d => d.OutageStartDateTime).ToList();
+            
             //    problemList.Add(new Problem()
             //    {
             //        ProblemNum = "PRBNOPROBLEM",
@@ -214,9 +253,13 @@ namespace ServiceNowNewsAndNotificationsAPI
             //    });
             //}
 
-            ////Assign unrelated incidents' problem num
+            //// Assign unrelated incidents' problem num
             //foreach (var unrelatedinc in unrelatedIncs)
             //{
+            //    // Set the Related Incident Sort Order
+            //    unrelatedinc.SortOrder = incidentSort.ToString();
+            //    incidentSort += 1;
+            
             //    unrelatedinc.ProblemNum = "PRBNOPROBLEM";
             //}
 
