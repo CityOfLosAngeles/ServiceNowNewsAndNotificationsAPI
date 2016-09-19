@@ -50,7 +50,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                 DateTime incClosedDate = new DateTime();
                 if (Convert.ToString(rec["closed_at"]) != string.Empty)
                 {
-                    incClosedDate = Convert.ToDateTime(rec["closed_at"]).ToLocalTime();
+                    incClosedDate = Convert.ToDateTime(rec["closed_at"]);
                 }
 
                 var dateDiff = (DateTime.Now - incClosedDate).TotalDays;
@@ -62,19 +62,19 @@ namespace ServiceNowNewsAndNotificationsAPI
                     string incStartDate = "";
                     if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
                     {
-                        incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("MM/dd/yyyy hh:mm tt");
                     }
 
                     string incEndDate = "";
                     if (Convert.ToString(rec["u_outage_end_dttm"]) != string.Empty)
                     {
-                        incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToString("MM/dd/yyyy hh:mm tt");
                     }
 
                     string incCreatedDate = "";
                     if (Convert.ToString(rec["opened_at"]) != string.Empty)
                     {
-                        incCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        incCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToString("MM/dd/yyyy hh:mm tt");
                     }
 
 
@@ -83,8 +83,8 @@ namespace ServiceNowNewsAndNotificationsAPI
                     string outageStartTime = "";
                     if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
                     {
-                        outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy");
-                        outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("hh:mm tt");
+                        outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("MM/dd/yyyy");
+                        outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("hh:mm tt");
                     }
 
                     inc.IncidentNum = Convert.ToString(rec["number"]); //incident number
@@ -123,9 +123,10 @@ namespace ServiceNowNewsAndNotificationsAPI
                 string prbStartDate = "";
                 string prbEndDate = "";
                 string prbCreatedDate = "";
+
                 if (Convert.ToString(rec["u_outage_start_date_time"]) != string.Empty)
                 {
-                    prbStartDate = Convert.ToDateTime(rec["u_outage_start_date_time"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    prbStartDate = Convert.ToDateTime(rec["u_outage_start_date_time"]).ToString("MM/dd/yyyy hh:mm tt");
                 }
                 else
                 {
@@ -134,7 +135,7 @@ namespace ServiceNowNewsAndNotificationsAPI
 
                 if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
                 {
-                    prbEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    prbEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToString("MM/dd/yyyy hh:mm tt");
                 }
                 else
                 {
@@ -143,7 +144,7 @@ namespace ServiceNowNewsAndNotificationsAPI
 
                 if (Convert.ToString(rec["opened_at"]) != string.Empty)
                 {
-                    prbCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    prbCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToString("MM/dd/yyyy hh:mm tt");
                 }
                 else
                 {
@@ -156,7 +157,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                 DateTime probEndDate = new DateTime();
                 if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
                 {
-                    probEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToLocalTime();
+                    probEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]);
                 }
                 var dateDiff = (prbEndDate != "") ? (DateTime.Now - probEndDate).TotalDays : 10;
                 if (prbEndDate == "" || dateDiff <= 1)
