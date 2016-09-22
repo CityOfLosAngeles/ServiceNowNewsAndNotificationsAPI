@@ -14,254 +14,279 @@ namespace ServiceNowNewsAndNotificationsAPI
     {
         public List<Problem> DataMassage(string incidentData, string problemData)
         {
-            JObject incidentsObj = JObject.Parse(incidentData);
-            JArray incidentArray = (JArray)incidentsObj["result"];
             List<Incident> incidentList = new List<Incident>();
             List<Problem> problemList = new List<Problem>();
 
-            for (var i = 0; i < incidentArray.Count; i++)
-            {
-                var rec = incidentArray[i];
-                string statusValue = "";
-                switch (Convert.ToString(rec["state"]))
-                {
-                    case "1":
-                        statusValue = "New";
-                        break;
-                    case "2":
-                        statusValue = "Active";
-                        break;
-                    case "3":
-                        statusValue = "Awaiting Problem";
-                        break;
-                    case "4":
-                        statusValue = "Awaiting User Info";
-                        break;
-                    case "6":
-                        statusValue = "Resolved";
-                        break;
-                    case "7":
-                        statusValue = "Closed";
-                        break;
-                }
-
-
-                //check incident closed date if within 24hr then show
-                DateTime incClosedDate = new DateTime();
-                if (Convert.ToString(rec["closed_at"]) != string.Empty)
-                {
-                    incClosedDate = Convert.ToDateTime(rec["closed_at"]);
-                }
-
-                var dateDiff = (DateTime.Now - incClosedDate).TotalDays;
-                if (string.IsNullOrWhiteSpace(rec["closed_at"].ToString()) || dateDiff <= 1)
-                {
-                    //create new incident holder
-                    var inc = new Incident();
-
-                    string incStartDate = "";
-                    if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
-                    {
-                        incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("MM/dd/yyyy hh:mm tt");
-                    }
-
-                    string incEndDate = "";
-                    if (Convert.ToString(rec["u_outage_end_dttm"]) != string.Empty)
-                    {
-                        incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToString("MM/dd/yyyy hh:mm tt");
-                    }
-
-                    string incCreatedDate = "";
-                    if (Convert.ToString(rec["opened_at"]) != string.Empty)
-                    {
-                        incCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToString("MM/dd/yyyy hh:mm tt");
-                    }
-
-
-
-                    string outageStartDate = "";
-                    string outageStartTime = "";
-                    if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
-                    {
-                        outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("MM/dd/yyyy");
-                        outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToString("hh:mm tt");
-                    }
-
-                    inc.IncidentNum = Convert.ToString(rec["number"]); //incident number
-                    inc.IncidentStatus = (statusValue == "Awaiting Problem") ? "Related" : statusValue; //New, Active, Awaiting Problem, Awawiting User Info, Resolved, Closed
-                    inc.OutageStartDateTime = (incStartDate != string.Empty) ? incStartDate : ""; //outage start datetime
-                    inc.OutageEndDateTime = (incEndDate != string.Empty) ? incEndDate : "";//outage end datetime
-                    inc.OutageScope = Convert.ToString(rec["u_outage_scope"]); //outage scope [critical or not]
-                    inc.OutageType = Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
-                    inc.ShortDescription = Convert.ToString(rec["short_description"]); //short description
-                    inc.CreatedDt = incCreatedDate; //open date
-                    inc.OutageStartDt = outageStartDate;
-                    inc.OutageStartTm = outageStartTime;
-                    dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));
-                    if (problemIdValue != null)
-                    {
-                        inc.ProblemId = problemIdValue.value; //Convert.ToString(rec["problem_id"]); //problem sysid
-                        inc.ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + inc.ProblemId;
-                    }
-                    else
-                    {
-                        inc.ProblemId = "";
-                        inc.ProblemLink = "";
-                    }
-                    inc.ClosedDt = (Convert.ToString(rec["closed_at"]) != string.Empty) ? incClosedDate.ToString("MM/dd/yyyy hh:mm tt") : ""; //closed date
-                    inc.IncidentLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=incident.do?sys_id=" + Convert.ToString(rec["sys_id"]);
-                    incidentList.Add(inc);
-                }
-            }
-
+            // Get Problem data from ServiceNow
             JObject problemsObj = JObject.Parse(problemData);
             JArray problemArray = (JArray)problemsObj["result"];
 
-            for (var i = 0; i < problemArray.Count; i++)
+            if (problemArray.Count > 0)
             {
-                var rec = problemArray[i];
-                string prbStartDate = "";
-                string prbEndDate = "";
-                string prbCreatedDate = "";
+                // Get Incident data from ServiceNow
+                JObject incidentsObj = JObject.Parse(incidentData);
+                JArray incidentArray = (JArray)incidentsObj["result"];
 
-                if (Convert.ToString(rec["u_outage_start_date_time"]) != string.Empty)
+                for (var i = 0; i < incidentArray.Count; i++)
                 {
-                    prbStartDate = Convert.ToDateTime(rec["u_outage_start_date_time"]).ToString("MM/dd/yyyy hh:mm tt");
-                }
-                else
-                {
-                    prbStartDate = "";
-                }
-
-                if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
-                {
-                    prbEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToString("MM/dd/yyyy hh:mm tt");
-                }
-                else
-                {
-                    prbEndDate = "";
-                }
-
-                if (Convert.ToString(rec["opened_at"]) != string.Empty)
-                {
-                    prbCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToString("MM/dd/yyyy hh:mm tt");
-                }
-                else
-                {
-                    prbCreatedDate = "";
-                }
-                if (Convert.ToString(rec["ended_at"]) != string.Empty)
-                {
-
-                }
-                DateTime probEndDate = new DateTime();
-                if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
-                {
-                    probEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]);
-                }
-                var dateDiff = (prbEndDate != "") ? (DateTime.Now - probEndDate).TotalDays : 10;
-                if (prbEndDate == "" || dateDiff <= 1)
-                {
-                    problemList.Add(new Problem()
+                    var rec = incidentArray[i];
+                    string statusValue = "";
+                    switch (Convert.ToString(rec["state"]))
                     {
-                        ProblemNum = Convert.ToString(rec["number"]), //problem number
-                        OutageStartDateTime = prbStartDate, //outage start datetime
-                        OutageEndDateTime = (prbEndDate != string.Empty) ? prbEndDate : "",//outage end datetime
-                        OutageScope = Convert.ToString(rec["u_outage_scope"]), //outage scope [critical or not]
-                        OutageType = Convert.ToString(rec["u_outage_type"]), //Type of Outage (Planned, Unplanned or Awaiting Problem)
-                        OutageStatus = Convert.ToString(rec["u_outage_status"]), //Outage Status (Investigating, In Progress, Resolved, Closed)
-                        ShortDescription = Convert.ToString(rec["short_description"]), //short description
-                        CreatedDt = prbCreatedDate, //open date
-                        SysId = Convert.ToString(rec["sys_id"]), //problem sysid
-                        ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + Convert.ToString(rec["sys_id"])
-                    });
-                }
-            }
-
-            // Sort the Problem List by Outage Status (Investigating, In Progress, Resolved, and Closed)
-            problemList = problemList.OrderByDescending(p => p.OutageStatus == "Investigating")
-                .ThenByDescending(p => p.OutageStatus == "In progress")
-                .ThenByDescending(p => p.OutageStatus == "Resolved")
-                .ThenByDescending(p => p.OutageStatus == "Closed")
-                .ThenByDescending(p => p.OutageStartDateTime).ToList();
-
-            
-            var problemSort = 1;
-            var incidentSort = 1;
-            var relatedProblemNum = "";
-            
-            //Build Problem and Incident RelationShip
-            foreach (var p in problemList)
-            {
-                // Set Problem Sort Order
-                p.ProbSortOrder = problemSort.ToString();
-                problemSort += 1;
-
-                //find related incident
-                var relatedIncs = incidentList.Where(x => x.ProblemId == p.SysId);
-                if (relatedIncs.Count() > 0)
-                {
-                    // Sort the related Incident List by date and time
-                    relatedIncs = relatedIncs.OrderByDescending(d => d.CreatedDt).ToList();
-
-                    foreach (var inc in relatedIncs)
-                    {
-                        if (relatedProblemNum != "" && inc.ProblemId != relatedProblemNum)
-                        {
-                            // Reset the Incident sort order
-                            incidentSort = 1;
-                            relatedProblemNum = "";
-                        }
-
-                        // Set the Related Incident Sort Order
-                        if (relatedProblemNum == "" || inc.ProblemId == relatedProblemNum)
-                        {
-                            inc.IncSortOrder = incidentSort.ToString();
-                            incidentSort += 1;
-                            relatedProblemNum = inc.ProblemId;
-                        }
-
-                        inc.ProblemNum = p.ProblemNum;
+                        case "1":
+                            statusValue = "New";
+                            break;
+                        case "2":
+                            statusValue = "Active";
+                            break;
+                        case "3":
+                            statusValue = "Awaiting Problem";
+                            break;
+                        case "4":
+                            statusValue = "Awaiting User Info";
+                            break;
+                        case "6":
+                            statusValue = "Resolved";
+                            break;
+                        case "7":
+                            statusValue = "Closed";
+                            break;
                     }
-                    p.Incidents.AddRange(relatedIncs);
+
+
+                    //check incident closed date if within 24hr then show
+                    DateTime incClosedDate = new DateTime();
+                    if (Convert.ToString(rec["closed_at"]) != string.Empty)
+                    {
+                        incClosedDate = Convert.ToDateTime(rec["closed_at"]).ToLocalTime();
+                    }
+
+                    var dateDiff = (DateTime.Now - incClosedDate).TotalDays;
+                    if (string.IsNullOrWhiteSpace(rec["closed_at"].ToString()) || dateDiff <= 1)
+                    {
+                        //create new incident holder
+                        var inc = new Incident();
+
+                        string incStartDate = "";
+                        if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
+                        {
+                            incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        }
+
+                        string incEndDate = "";
+                        if (Convert.ToString(rec["u_outage_end_dttm"]) != string.Empty)
+                        {
+                            incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        }
+
+                        string incCreatedDate = "";
+                        if (Convert.ToString(rec["opened_at"]) != string.Empty)
+                        {
+                            incCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                        }
+
+
+
+                        string outageStartDate = "";
+                        string outageStartTime = "";
+                        if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
+                        {
+                            outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy");
+                            outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("hh:mm tt");
+                        }
+
+                        inc.IncidentNum = Convert.ToString(rec["number"]); //incident number
+                        inc.IncidentStatus = (statusValue == "Awaiting Problem") ? "Related" : statusValue; //New, Active, Awaiting Problem, Awawiting User Info, Resolved, Closed
+                        inc.OutageStartDateTime = (incStartDate != string.Empty) ? incStartDate : ""; //outage start datetime
+                        inc.OutageEndDateTime = (incEndDate != string.Empty) ? incEndDate : "";//outage end datetime
+                        inc.OutageScope = Convert.ToString(rec["u_outage_scope"]); //outage scope [critical or not]
+                        inc.OutageType = Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
+                        inc.ShortDescription = Convert.ToString(rec["short_description"]); //short description
+                        inc.CreatedDt = incCreatedDate; //open date
+                        inc.OutageStartDt = outageStartDate;
+                        inc.OutageStartTm = outageStartTime;
+                        dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));
+                        if (problemIdValue != null)
+                        {
+                            inc.ProblemId = problemIdValue.value ; //Convert.ToString(rec["problem_id"]); //problem sysid
+                            inc.ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + inc.ProblemId;
+                        }
+                        else
+                        {
+                            inc.ProblemId = "";
+                            inc.ProblemLink = "";
+                        }
+                        inc.ClosedDt = (Convert.ToString(rec["closed_at"]) != string.Empty) ? incClosedDate.ToString("MM/dd/yyyy hh:mm tt") : ""; //closed date
+                        inc.IncidentLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=incident.do?sys_id=" + Convert.ToString(rec["sys_id"]);
+                        incidentList.Add(inc);
+                    }
+                }
+
+                //// This sectioncommented out to remove incidents that are unrelated to a problem from the feed.
+                //// TODO: Add Incident at top level to problemList
+                //// Reset sort order for incidents
+                //var incidentSort = 1;
+                //var unrelatedIncs = incidentList.Where(w => w.ProblemId == "");
+                //if (unrelatedIncs.Count() > 0)
+                //{
+                //    // Sort the unrelated Incident List by date and time
+                //    unrelatedIncs = unrelatedIncs.OrderByDescending(d => d.OutageStartDateTime).ToList();
+
+                //    problemList.Add(new Problem()
+                //    {
+                //        ProblemNum = "PRBNOPROBLEM",
+                //        OutageStartDateTime = "",
+                //        OutageEndDateTime = "",
+                //        OutageScope = "",
+                //        OutageType = "",
+                //        OutageStatus = "",
+                //        ShortDescription = "",
+                //        CreatedDt = "",
+                //        SysId = "",
+                //        ProblemLink = "",
+                //        Incidents = unrelatedIncs.ToList()
+                //    });
+                //}
+
+                //// Assign unrelated incidents' problem num
+                //foreach (var unrelatedinc in unrelatedIncs)
+                //{
+                //    // Set the Related Incident Sort Order
+                //    unrelatedinc.SortOrder = incidentSort.ToString();
+                //    incidentSort += 1;
+
+                //    unrelatedinc.ProblemNum = "PRBNOPROBLEM";
+                //}
+
+                // Set Problem data with related Incidents
+                for (var i = 0; i < problemArray.Count; i++)
+                {
+                    var rec = problemArray[i];
+                    string prbStartDate = "";
+                    string prbEndDate = "";
+                    string prbCreatedDate = "";
+
+                    if (Convert.ToString(rec["u_outage_start_date_time"]) != string.Empty)
+                    {
+                        prbStartDate = Convert.ToDateTime(rec["u_outage_start_date_time"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    }
+                    else
+                    {
+                        prbStartDate = "";
+                    }
+
+                    if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
+                    {
+                        prbEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    }
+                    else
+                    {
+                        prbEndDate = "";
+                    }
+
+                    if (Convert.ToString(rec["opened_at"]) != string.Empty)
+                    {
+                        prbCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    }
+                    else
+                    {
+                        prbCreatedDate = "";
+                    }
+                    if (Convert.ToString(rec["ended_at"]) != string.Empty)
+                    {
+
+                    }
+                    DateTime probEndDate = new DateTime();
+                    if (Convert.ToString(rec["u_outage_end_date_time"]) != string.Empty)
+                    {
+                        probEndDate = Convert.ToDateTime(rec["u_outage_end_date_time"]).ToLocalTime();
+                    }
+                    var dateDiff = (prbEndDate != "") ? (DateTime.Now - probEndDate).TotalDays : 10;
+                    if (prbEndDate == "" || dateDiff <= 1)
+                    {
+                        problemList.Add(new Problem()
+                        {
+                            ProblemNum = Convert.ToString(rec["number"]), //problem number
+                            OutageStartDateTime = prbStartDate, //outage start datetime
+                            OutageEndDateTime = (prbEndDate != string.Empty) ? prbEndDate : "",//outage end datetime
+                            OutageScope = Convert.ToString(rec["u_outage_scope"]), //outage scope [critical or not]
+                            OutageType = Convert.ToString(rec["u_outage_type"]), //Type of Outage (Planned, Unplanned or Awaiting Problem)
+                            OutageStatus = Convert.ToString(rec["u_outage_status"]), //Outage Status (Investigating, In Progress, Resolved, Closed)
+                            ShortDescription = Convert.ToString(rec["short_description"]), //short description
+                            CreatedDt = prbCreatedDate, //open date
+                            SysId = Convert.ToString(rec["sys_id"]), //problem sysid
+                            ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + Convert.ToString(rec["sys_id"])
+                        });
+                    }
+                }
+
+                // Sort the Problem List by Outage Status (Investigating, In Progress, Resolved, and Closed)
+                problemList = problemList.OrderByDescending(p => p.OutageStatus == "Investigating")
+                    .ThenByDescending(p => p.OutageStatus == "In progress")
+                    .ThenByDescending(p => p.OutageStatus == "Resolved")
+                    .ThenByDescending(p => p.OutageStatus == "Closed")
+                    .ThenByDescending(p => p.OutageStartDateTime).ToList();
+
+
+                var problemSort = 1;
+                var incidentSort = 1;
+                var relatedProblemNum = "";
+
+                //Build Problem and Incident RelationShip
+                foreach (var p in problemList)
+                {
+                    // Set Problem Sort Order
+                    p.ProbSortOrder = problemSort.ToString();
+                    problemSort += 1;
+
+                    //find related incident
+                    var relatedIncs = incidentList.Where(x => x.ProblemId == p.SysId);
+                    if (relatedIncs.Count() > 0)
+                    {
+                        // Sort the related Incident List by date and time
+                        relatedIncs = relatedIncs.OrderByDescending(d => d.CreatedDt).ToList();
+
+                        foreach (var inc in relatedIncs)
+                        {
+                            if (relatedProblemNum != "" && inc.ProblemId != relatedProblemNum)
+                            {
+                                // Reset the Incident sort order
+                                incidentSort = 1;
+                                relatedProblemNum = "";
+                            }
+
+                            // Set the Related Incident Sort Order
+                            if (relatedProblemNum == "" || inc.ProblemId == relatedProblemNum)
+                            {
+                                inc.IncSortOrder = incidentSort.ToString();
+                                incidentSort += 1;
+                                relatedProblemNum = inc.ProblemId;
+                            }
+
+                            inc.ProblemNum = p.ProblemNum;
+                        }
+                        p.Incidents.AddRange(relatedIncs);
+                    }
                 }
             }
-
-            //// This sectioncommented out to remove incidents that are unrelated to a problem from the feed.
-            //// TODO: Add Incident at top level to problemList
-            //// Reset sort order for incidents
-            //var incidentSort = 1;
-            //var unrelatedIncs = incidentList.Where(w => w.ProblemId == "");
-            //if (unrelatedIncs.Count() > 0)
-            //{
-            //    // Sort the unrelated Incident List by date and time
-            //    unrelatedIncs = unrelatedIncs.OrderByDescending(d => d.OutageStartDateTime).ToList();
-            
-            //    problemList.Add(new Problem()
-            //    {
-            //        ProblemNum = "PRBNOPROBLEM",
-            //        OutageStartDateTime = "",
-            //        OutageEndDateTime = "",
-            //        OutageScope = "",
-            //        OutageType = "",
-            //        OutageStatus = "",
-            //        ShortDescription = "",
-            //        CreatedDt = "",
-            //        SysId = "",
-            //        ProblemLink = "",
-            //        Incidents = unrelatedIncs.ToList()
-            //    });
-            //}
-
-            //// Assign unrelated incidents' problem num
-            //foreach (var unrelatedinc in unrelatedIncs)
-            //{
-            //    // Set the Related Incident Sort Order
-            //    unrelatedinc.SortOrder = incidentSort.ToString();
-            //    incidentSort += 1;
-            
-            //    unrelatedinc.ProblemNum = "PRBNOPROBLEM";
-            //}
+            else
+            {
+                List<Incident> emptyList = new List<Incident>();
+                problemList.Add(new Problem()
+                {
+                    ProblemNum = "PRBNoProblem",
+                    OutageStartDateTime = "",
+                    OutageEndDateTime = "",
+                    OutageScope = "",
+                    OutageType = "",
+                    OutageStatus = "",
+                    ShortDescription = "",
+                    CreatedDt = "",
+                    SysId = "",
+                    ProblemLink = "",
+                    Incidents = emptyList.ToList()
+                });
+            }
 
             return problemList;
         }
@@ -276,7 +301,7 @@ namespace ServiceNowNewsAndNotificationsAPI
             {
                 if (!string.IsNullOrWhiteSpace(kbItem["valid_to"].ToString()))
                 {
-                    if (Convert.ToDateTime(kbItem["valid_to"].ToString()).Date >= DateTime.Now.Date)
+                    if (Convert.ToDateTime(kbItem["valid_to"].ToString()).ToLocalTime().Date >= DateTime.Now.Date)
                     {
                         var kb = new Knowledge();
                         kb.CreatedDt = Convert.ToString(kbItem["sys_created_on"]).Trim();
@@ -293,9 +318,57 @@ namespace ServiceNowNewsAndNotificationsAPI
                 }
             }
 
-
-
             return kbList;
         }
+
+        public List<Change> GetChanges(string ChangeData)
+        {
+            JObject ChangeObj = JObject.Parse(ChangeData);
+            JArray ChangeResultSets = (JArray)ChangeObj["result"];
+            List<Change> ChangeList = new List<Change>();
+
+            if (ChangeResultSets.Count() > 0)
+            {
+                // TODO: Add business logic to filter list
+                
+                // Loop through results and assign desired fields to Change object and add to list
+                foreach (var ChangeItem in ChangeResultSets)
+                {
+                    var change = new Change();
+                    change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
+                    change.ChangeShortDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["short_description"]).Trim());
+                    change.ChangeDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["description"]).Trim());
+                    change.PlannedChangeStartDate = Convert.ToString(ChangeItem["start_date"]).Trim();
+                    change.PlannedChangeEndDate = Convert.ToString(ChangeItem["end_date"]).Trim();
+                    change.ChangeApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
+                    change.ChangeState = Convert.ToString(ChangeItem["state"]).Trim();
+                    change.ChangeRisk = Convert.ToString(ChangeItem["risk"]).Trim();
+                    change.ChangePriority = Convert.ToString(ChangeItem["priority"]).Trim();
+                    change.ChangeImpact = Convert.ToString(ChangeItem["impact"]).Trim();
+                    change.ChangeLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=change_request.do?sys_id=" + Convert.ToString(ChangeItem["sys_id"]).Trim();
+                    ChangeList.Add(change);
+                }
+            }
+            else
+            {
+                // If no records are returned, create default record
+                var change = new Change();
+                change.ChangeNumber = "CHGNoChanges";
+                change.ChangeShortDescription = "There are no Pre-planned outages scheduled at this time.";
+                change.ChangeDescription = "";
+                change.PlannedChangeStartDate = "";
+                change.PlannedChangeEndDate = "";
+                change.ChangeApprovalStatus = "";
+                change.ChangeState = "";
+                change.ChangeRisk = "";
+                change.ChangePriority = "";
+                change.ChangeImpact = "";
+                change.ChangeLink = "";
+                ChangeList.Add(change);
+            }
+
+            return ChangeList;
+        }
+
     }
 }

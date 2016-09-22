@@ -69,5 +69,30 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.InnerException +":" + e.StackTrace + ":" + e.Message);
             }
         }
+
+
+        [HttpGet]
+        [Route("getChanges")]
+        public HttpResponseMessage getChanges()
+        {
+            try
+            {
+                //Knowledge URL
+                string ChangeURL = ConfigurationManager.AppSettings["ChangecURL"];
+
+                // Knowledge Connection
+                ServiceNowRequest webRequest = new ServiceNowRequest(ChangeURL, "GET");
+                var ChangeData = webRequest.GetResponse();
+
+                var getData = new ProcessData();
+                var list = getData.GetChanges(ChangeData);
+
+                return Request.CreateResponse(HttpStatusCode.OK, list);
+            }
+            catch (Exception e)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.InnerException + ":" + e.StackTrace + ":" + e.Message);
+            }
+        }
     }
 }
