@@ -7,16 +7,14 @@ namespace ServiceNowNewsAndNotificationsAPI.Models
 {
     public class Change
     {
-        public string ChangeNumber { get; set; }
-        public string ChangeShortDescription { get; set; }
-        public string ChangeDescription { get; set; }
-        public string PlannedChangeStartDate { get; set; }
-        public string PlannedChangeEndDate { get; set; }
-        public string ChangeApprovalStatus { get; set; }
-        public string ChangeState { get; set; }
-        public string ChangeRisk { get; set; }
-        public string ChangePriority { get; set; }
-        public string ChangeImpact { get; set; }
-        public string ChangeLink { get; set; }
+        public string ChangeNumber { get; set; }//problem number
+        public string ChangeShortDescription { get; set; }//short description*
+        public string ChangeApprovalStatus { get; set; }//type*
+        public string ChangeState { get; set; }//outage status*
+        public string ChangeETA { get; set; }
+        public string ChangeLink { get; set; }//problem link*
+        public string ChangeSysId { get; set; }//outage sysid
+        public string ChangeOutageStartDT { get; set; }//outage start datetime*
+        public string ChangeOutageEndDT { get; set; }//outage end datetime*
     }
 }
