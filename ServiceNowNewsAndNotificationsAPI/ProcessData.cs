@@ -280,7 +280,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                     OutageScope = "",
                     OutageType = "",
                     OutageStatus = "",
-                    ShortDescription = "",
+                    ShortDescription = "No Current Issues at this time.",
                     CreatedDt = "",
                     SysId = "",
                     ProblemLink = "",
@@ -329,24 +329,59 @@ namespace ServiceNowNewsAndNotificationsAPI
 
             if (ChangeResultSets.Count() > 0)
             {
-                // TODO: Add business logic to filter list
-                
                 // Loop through results and assign desired fields to Change object and add to list
                 foreach (var ChangeItem in ChangeResultSets)
                 {
                     var change = new Change();
-                    change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
-                    change.ChangeShortDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["short_description"]).Trim());
-                    change.ChangeDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["description"]).Trim());
-                    change.PlannedChangeStartDate = Convert.ToString(ChangeItem["start_date"]).Trim();
-                    change.PlannedChangeEndDate = Convert.ToString(ChangeItem["end_date"]).Trim();
-                    change.ChangeApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
-                    change.ChangeState = Convert.ToString(ChangeItem["state"]).Trim();
-                    change.ChangeRisk = Convert.ToString(ChangeItem["risk"]).Trim();
-                    change.ChangePriority = Convert.ToString(ChangeItem["priority"]).Trim();
-                    change.ChangeImpact = Convert.ToString(ChangeItem["impact"]).Trim();
-                    change.ChangeLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=change_request.do?sys_id=" + Convert.ToString(ChangeItem["sys_id"]).Trim();
-                    ChangeList.Add(change);
+                    string chgOutageStartDT = "";
+                    string chgOutageEndDT = "";
+                    string chgApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
+                    string chgState = Convert.ToString(ChangeItem["state"]).Trim();
+                    string chgETA = Convert.ToDateTime(ChangeItem["end_date"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+
+                    if (Convert.ToString(ChangeItem["u_chg_outage_start"]) != string.Empty)
+                    {
+                        chgOutageStartDT = Convert.ToDateTime(ChangeItem["u_chg_outage_start"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    }
+
+                    if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                    {
+                        chgOutageEndDT = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    }
+
+                    DateTime chgEndDate = new DateTime();
+                    if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                    {
+                        chgEndDate = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime();
+                    }
+
+                    // TODO: Test logic for filtering planned outages
+                    if (chgApprovalStatus == "Approved" && (chgState == "Ready" || chgState == "Work In Progress" || 
+                        chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled"))
+                    {
+                        var dateDiff = (chgOutageEndDT != "") ? (DateTime.Now - chgEndDate).TotalDays : 10;
+                        if ((chgOutageEndDT == "" || dateDiff <= 1) || 
+                            ((chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled") && dateDiff <= 1))
+                        {
+                            change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
+                            change.ChangeOutageStartDT = chgOutageStartDT;
+                            change.ChangeOutageEndDT = chgOutageEndDT;
+                            if (change.ChangeOutageEndDT != string.Empty)
+                            {
+                                change.ChangeApprovalStatus = "System AVAILABLE";
+                            }
+                            else
+                            {
+                                change.ChangeApprovalStatus = chgApprovalStatus;
+                            }
+                            change.ChangeState = chgState;
+                            change.ChangeShortDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["short_description"]).Trim());
+                            change.ChangeSysId = Convert.ToString(ChangeItem["sys_id"]).Trim();
+                            change.ChangeLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=change_request.do?sys_id=" + change.ChangeSysId;
+                            change.ChangeETA = chgETA;
+                            ChangeList.Add(change);
+                        }
+                    }
                 }
             }
             else
@@ -354,16 +389,14 @@ namespace ServiceNowNewsAndNotificationsAPI
                 // If no records are returned, create default record
                 var change = new Change();
                 change.ChangeNumber = "CHGNoChanges";
-                change.ChangeShortDescription = "There are no Pre-planned outages scheduled at this time.";
-                change.ChangeDescription = "";
-                change.PlannedChangeStartDate = "";
-                change.PlannedChangeEndDate = "";
+                change.ChangeOutageStartDT = "";
+                change.ChangeOutageEndDT = "";
                 change.ChangeApprovalStatus = "";
                 change.ChangeState = "";
-                change.ChangeRisk = "";
-                change.ChangePriority = "";
-                change.ChangeImpact = "";
+                change.ChangeShortDescription = "There are no Pre-planned outages scheduled at this time.";
+                change.ChangeSysId = "";
                 change.ChangeLink = "";
+                change.ChangeETA = "";
                 ChangeList.Add(change);
             }
 
