@@ -21,7 +21,7 @@ namespace ServiceNowNewsAndNotificationsAPI
             JObject problemsObj = JObject.Parse(problemData);
             JArray problemArray = (JArray)problemsObj["result"];
 
-            if (problemArray.Count > 0)
+           // if (problemArray.Count > 0)
             {
                 // Get Incident data from ServiceNow
                 JObject incidentsObj = JObject.Parse(incidentData);
@@ -108,7 +108,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                         dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));
                         if (problemIdValue != null)
                         {
-                            inc.ProblemId = problemIdValue.value ; //Convert.ToString(rec["problem_id"]); //problem sysid
+                            inc.ProblemId = problemIdValue.value; //Convert.ToString(rec["problem_id"]); //problem sysid
                             inc.ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + inc.ProblemId;
                         }
                         else
@@ -269,12 +269,14 @@ namespace ServiceNowNewsAndNotificationsAPI
                     }
                 }
             }
-            else
+            
+            if (problemList.Count <= 0)
             {
                 List<Incident> emptyList = new List<Incident>();
                 problemList.Add(new Problem()
                 {
-                    ProblemNum = "PRBNoProblem",
+                    //ProblemNum = "PRBNoProblem",
+                    ProblemNum = "PRBNONE",
                     OutageStartDateTime = "",
                     OutageEndDateTime = "",
                     OutageScope = "",
@@ -297,6 +299,7 @@ namespace ServiceNowNewsAndNotificationsAPI
             JArray kbResultSets = (JArray)kbObj["result"];
             List<Knowledge> kbList = new List<Knowledge>();
 
+
             foreach (var kbItem in kbResultSets)
             {
                 if (!string.IsNullOrWhiteSpace(kbItem["valid_to"].ToString()))
@@ -318,6 +321,23 @@ namespace ServiceNowNewsAndNotificationsAPI
                 }
             }
 
+            if (kbList.Count <= 0)
+            {
+                // If no records are returned, create default record
+                var kb = new Knowledge();
+                kb.KBNum = "NWSNoChanges";
+                kb.CreatedDt = string.Empty;
+                kb.Description = string.Empty;
+                kb.ShortDescription = "There are no news items at this time.";
+                kb.SysId = string.Empty;
+                //kb.WorkflowStatus = string.Empty;
+                kb.WorkflowStatus = "published";
+                kb.KBLink = string.Empty;
+                kb.PublishedDt = string.Empty;
+                kb.ValidToDt = string.Empty;
+                kbList.Add(kb);
+            }
+
             return kbList;
         }
 
@@ -327,64 +347,63 @@ namespace ServiceNowNewsAndNotificationsAPI
             JArray ChangeResultSets = (JArray)ChangeObj["result"];
             List<Change> ChangeList = new List<Change>();
 
-            if (ChangeResultSets.Count() > 0)
+            // Loop through results and assign desired fields to Change object and add to list
+            foreach (var ChangeItem in ChangeResultSets)
             {
-                // Loop through results and assign desired fields to Change object and add to list
-                foreach (var ChangeItem in ChangeResultSets)
+                var change = new Change();
+                string chgOutageStartDT = "";
+                string chgOutageEndDT = "";
+                string chgApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
+                string chgState = Convert.ToString(ChangeItem["state"]).Trim();
+                string chgETA = Convert.ToDateTime(ChangeItem["end_date"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+
+                if (Convert.ToString(ChangeItem["u_chg_outage_start"]) != string.Empty)
                 {
-                    var change = new Change();
-                    string chgOutageStartDT = "";
-                    string chgOutageEndDT = "";
-                    string chgApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
-                    string chgState = Convert.ToString(ChangeItem["state"]).Trim();
-                    string chgETA = Convert.ToDateTime(ChangeItem["end_date"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    chgOutageStartDT = Convert.ToDateTime(ChangeItem["u_chg_outage_start"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                }
 
-                    if (Convert.ToString(ChangeItem["u_chg_outage_start"]) != string.Empty)
-                    {
-                        chgOutageStartDT = Convert.ToDateTime(ChangeItem["u_chg_outage_start"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
-                    }
+                if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                {
+                    chgOutageEndDT = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                }
 
-                    if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
-                    {
-                        chgOutageEndDT = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
-                    }
+                DateTime chgEndDate = new DateTime();
+                if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                {
+                    chgEndDate = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime();
+                }
 
-                    DateTime chgEndDate = new DateTime();
-                    if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                // TODO: Test logic for filtering planned outages
+                if (chgApprovalStatus == "Approved" && (chgState == "Ready" || chgState == "Work In Progress" ||
+                    chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled"))
+                {
+                    var dateDiff = (chgOutageEndDT != "") ? (DateTime.Now - chgEndDate).TotalDays : 10;
+                    if ((chgOutageEndDT == "" || dateDiff <= 1) ||
+                        ((chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled") && dateDiff <= 1))
                     {
-                        chgEndDate = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime();
-                    }
-
-                    // TODO: Test logic for filtering planned outages
-                    if (chgApprovalStatus == "Approved" && (chgState == "Ready" || chgState == "Work In Progress" || 
-                        chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled"))
-                    {
-                        var dateDiff = (chgOutageEndDT != "") ? (DateTime.Now - chgEndDate).TotalDays : 10;
-                        if ((chgOutageEndDT == "" || dateDiff <= 1) || 
-                            ((chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled") && dateDiff <= 1))
+                        change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
+                        change.ChangeOutageStartDT = chgOutageStartDT;
+                        change.ChangeOutageEndDT = chgOutageEndDT;
+                        if (change.ChangeOutageEndDT != string.Empty)
                         {
-                            change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
-                            change.ChangeOutageStartDT = chgOutageStartDT;
-                            change.ChangeOutageEndDT = chgOutageEndDT;
-                            if (change.ChangeOutageEndDT != string.Empty)
-                            {
-                                change.ChangeApprovalStatus = "System AVAILABLE";
-                            }
-                            else
-                            {
-                                change.ChangeApprovalStatus = chgApprovalStatus;
-                            }
-                            change.ChangeState = chgState;
-                            change.ChangeShortDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["short_description"]).Trim());
-                            change.ChangeSysId = Convert.ToString(ChangeItem["sys_id"]).Trim();
-                            change.ChangeLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=change_request.do?sys_id=" + change.ChangeSysId;
-                            change.ChangeETA = chgETA;
-                            ChangeList.Add(change);
+                            change.ChangeApprovalStatus = "System AVAILABLE";
                         }
+                        else
+                        {
+                            change.ChangeApprovalStatus = chgApprovalStatus;
+                        }
+                        change.ChangeState = chgState;
+                        change.ChangeShortDescription = HttpUtility.HtmlDecode(Convert.ToString(ChangeItem["short_description"]).Trim());
+                        change.ChangeSysId = Convert.ToString(ChangeItem["sys_id"]).Trim();
+                        change.ChangeLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=change_request.do?sys_id=" + change.ChangeSysId;
+                        change.ChangeETA = chgETA;
+                        ChangeList.Add(change);
                     }
                 }
             }
-            else
+
+
+            if (ChangeList.Count() <= 0)
             {
                 // If no records are returned, create default record
                 var change = new Change();
@@ -402,6 +421,6 @@ namespace ServiceNowNewsAndNotificationsAPI
 
             return ChangeList;
         }
-
     }
+    
 }
