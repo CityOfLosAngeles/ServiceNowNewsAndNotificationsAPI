@@ -71,40 +71,45 @@ namespace ServiceNowNewsAndNotificationsAPI
                     var inc = new Incident();
 
                     string incStartDate = "";
-                    if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
-                    {
-                        incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
-                    }
+                    //Outage information from Incident has been removed
+                    //if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
+                    //{
+                    //    incStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    //}
 
-                    string incEndDate = "";
-                    if (Convert.ToString(rec["u_outage_end_dttm"]) != string.Empty)
-                    {
-                        incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
-                    }
+                    //string incEndDate = "";
+                    //if (Convert.ToString(rec["u_outage_end_dttm"]) != string.Empty)
+                    //{
+                    //    incEndDate = Convert.ToDateTime(rec["u_outage_end_dttm"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                    //}
 
                     string incCreatedDate = "";
                     if (Convert.ToString(rec["opened_at"]) != string.Empty)
                     {
                         incCreatedDate = Convert.ToDateTime(rec["opened_at"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
                     }
-                    string outageStartDate = "";
-                    string outageStartTime = "";
-                    if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
-                    {
-                        outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy");
-                        outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("hh:mm tt");
-                    }
+
+                    //Outage information from Incident has been removed
+                    //string outageStartDate = "";
+                    //string outageStartTime = "";
+                    //if (Convert.ToString(rec["u_outage_start_dttm"]) != string.Empty)
+                    //{
+                    //    outageStartDate = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("MM/dd/yyyy");
+                    //    outageStartTime = Convert.ToDateTime(rec["u_outage_start_dttm"]).ToLocalTime().ToString("hh:mm tt");
+                    //}
 
                     inc.IncidentNum = Convert.ToString(rec["number"]); //incident number
                     inc.IncidentStatus = (statusValue == "Awaiting Problem") ? "Related" : statusValue; //New, Active, Awaiting Problem, Awawiting User Info, Resolved, Closed
-                    inc.OutageStartDateTime = (incStartDate != string.Empty) ? incStartDate : ""; //outage start datetime
-                    inc.OutageEndDateTime = (incEndDate != string.Empty) ? incEndDate : "";//outage end datetime
-                    inc.OutageScope = Convert.ToString(rec["u_outage_scope"]); //outage scope [critical or not]
-                    inc.OutageType = Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
+
+                    //inc.OutageStartDateTime = (incStartDate != string.Empty) ? incStartDate : ""; //outage start datetime
+                    //inc.OutageEndDateTime = (incEndDate != string.Empty) ? incEndDate : "";//outage end datetime
+                    //inc.OutageScope = Convert.ToString(rec["u_outage_scope"]); //outage scope [critical or not]
+                    //inc.OutageType = Convert.ToString(rec["u_outage_type"]); //Type of Outage (Planned, Unplanned or Awaiting Problem)
+
                     inc.ShortDescription = Convert.ToString(rec["short_description"]); //short description
                     inc.CreatedDt = incCreatedDate; //open date
-                    inc.OutageStartDt = outageStartDate;
-                    inc.OutageStartTm = outageStartTime;
+                    //inc.OutageStartDt = outageStartDate;
+                    //inc.OutageStartTm = outageStartTime;
                     dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));
                     if (problemIdValue != null)
                     {
@@ -215,7 +220,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                         OutageStartDateTime = prbStartDate, //outage start datetime
                         OutageEndDateTime = (prbEndDate != string.Empty) ? prbEndDate : "",//outage end datetime
                         OutageScope = Convert.ToString(rec["u_outage_scope"]), //outage scope [critical or not]
-                        OutageType = Convert.ToString(rec["u_outage_type"]), //Type of Outage (Planned, Unplanned or Awaiting Problem)
+                        //OutageType = Convert.ToString(rec["u_outage_type"]), //Type of Outage (Planned, Unplanned or Awaiting Problem) Removed
                         OutageStatus = Convert.ToString(rec["u_outage_status"]), //Outage Status (Investigating, In Progress, Resolved, Closed)
                         ShortDescription = Convert.ToString(rec["short_description"]), //short description
                         CreatedDt = prbCreatedDate, //open date
@@ -284,7 +289,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                     OutageStartDateTime = "",
                     OutageEndDateTime = "",
                     OutageScope = "",
-                    OutageType = "",
+                    //OutageType = "",
                     OutageStatus = "",
                     ShortDescription = "No Current Issues at this time.",
                     CreatedDt = "",
@@ -306,11 +311,34 @@ namespace ServiceNowNewsAndNotificationsAPI
 
             foreach (var kbItem in kbResultSets)
             {
+                string knowledgeBaseSysId = string.Empty;
+                string categorySysId = string.Empty;
+                var kb = new Knowledge();
+
+                if (FilterReqsFromPoliceDept(kbItem, "News"))
+                    continue;
+
+                if (kbItem["kb_knowledge_base"] != null)
+                {
+                    knowledgeBaseSysId = kbItem["kb_knowledge_base"].SelectToken("value").ToString();
+                }
+
+                if (kbItem["kb_category"] != null)
+                {
+                    categorySysId = kbItem["kb_category"].SelectToken("value").ToString();
+                }
+
+                if (knowledgeBaseSysId != kb.KBNewsOutagesKnowledgeBase)
+                    continue;
+
+                if (categorySysId != kb.KBNewsCategory)
+                    continue;
+
                 if (!string.IsNullOrWhiteSpace(kbItem["valid_to"].ToString()))
                 {
                     if (Convert.ToDateTime(kbItem["valid_to"].ToString()).ToLocalTime().Date >= DateTime.Now.Date)
                     {
-                        var kb = new Knowledge();
+                        kb = new Knowledge();
                         kb.CreatedDt = Convert.ToString(kbItem["sys_created_on"]).Trim();
                         kb.Description = HttpUtility.HtmlDecode(Convert.ToString(kbItem["text"]).Trim());
                         kb.KBNum = Convert.ToString(kbItem["number"]).Trim();
@@ -359,17 +387,17 @@ namespace ServiceNowNewsAndNotificationsAPI
                 string chgOutageEndDT = "";
                 string chgApprovalStatus = Convert.ToString(ChangeItem["approval"]).Trim();
                 string chgState = Convert.ToString(ChangeItem["state"]).Trim();
-                string chgETA = Convert.ToDateTime(ChangeItem["end_date"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
+                string chgETA = Convert.ToDateTime(ChangeItem["end_date"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt"); //Planned end date
 
                 if (FilterReqsFromPoliceDept(ChangeItem, "Change"))
                     continue;
 
-                if (Convert.ToString(ChangeItem["u_chg_outage_start"]) != string.Empty)
+                if (Convert.ToString(ChangeItem["u_chg_outage_start"]) != string.Empty) //Outage start date
                 {
                     chgOutageStartDT = Convert.ToDateTime(ChangeItem["u_chg_outage_start"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
                 }
 
-                if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty)
+                if (Convert.ToString(ChangeItem["u_chg_outage_end"]) != string.Empty) //Outage end date
                 {
                     chgOutageEndDT = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]).ToLocalTime().ToString("MM/dd/yyyy hh:mm tt");
                 }
@@ -505,9 +533,13 @@ namespace ServiceNowNewsAndNotificationsAPI
                 case "Incident":
                     reqTypeField = "caller_id";
                     break;
+                case "News":
+                    requestType = "author";
+                    break;
             }
             //Request By
-            var requestedByURL = item[reqTypeField].SelectToken("link") != null ? item[reqTypeField].SelectToken("link").ToString() : null;
+            var requestedByURL = (item[reqTypeField] != null) ? item[reqTypeField].SelectToken("link").ToString() : null;
+          
             if (requestedByURL != null)
             {
                 var userSysId = Regex.Match(requestedByURL,
@@ -538,10 +570,13 @@ namespace ServiceNowNewsAndNotificationsAPI
             //assignment group
             string[] groups = new string[] { "ITA-DASD-Police Applications Support", "ITA-PSALAPD-Infra" };
             var assignmentGroup = item["assignment_group"];
-            foreach (var g in groups)
+            if (assignmentGroup != null)
             {
-                if (assignmentGroup.Contains(g))
-                    return true;
+                foreach (var g in groups)
+                {
+                    if (assignmentGroup.Contains(g))
+                        return true;
+                }
             }
             return false;
         }

@@ -15,7 +15,7 @@ namespace ServiceNowNewsAndNotificationsAPI.Models
         public string SysId { get; set; }
         public string OutageStartDateTime { get; set; }
         public string OutageEndDateTime { get; set; }
-        public string OutageType { get; set; }
+        //public string OutageType { get; set; }
         public string OutageScope { get; set; }
         public string OutageStatus { get; set; }
         public string ShortDescription { get; set; }
