@@ -14,17 +14,10 @@ namespace ServiceNowNewsAndNotificationsAPI
 {
     public class ProcessData
     {
-        public List<Problem> DataMassage(string incidentData, string problemData)
+        public List<Incident> IncidentDataMassage(string incidentData)
         {
-            List<Incident> incidentList = new List<Incident>();
-            List<Problem> problemList = new List<Problem>();
-
-            // Get Problem data from ServiceNow
-            JObject problemsObj = JObject.Parse(problemData);
-            JArray problemArray = (JArray)problemsObj["result"];
-
-
-            // Get Incident data from ServiceNow
+             List<Incident> incidentList = new List<Incident>();
+               // Get Incident data from ServiceNow
             JObject incidentsObj = JObject.Parse(incidentData);
             JArray incidentArray = (JArray)incidentsObj["result"];
 
@@ -130,6 +123,18 @@ namespace ServiceNowNewsAndNotificationsAPI
                     incidentList.Add(inc);
                 }
             }
+
+            return incidentList;
+        }
+
+        public List<Problem> ProblemDataMassage(string problemData)
+        {
+           
+            List<Problem> problemList = new List<Problem>();
+
+            // Get Problem data from ServiceNow
+            JObject problemsObj = JObject.Parse(problemData);
+            JArray problemArray = (JArray)problemsObj["result"];         
            
             #region not adding unrelated incidents to problems
             //// This sectioncommented out to remove incidents that are unrelated to a problem from the feed.
@@ -242,11 +247,12 @@ namespace ServiceNowNewsAndNotificationsAPI
                 .ThenByDescending(p => p.OutageStartDateTime).ToList();
 
 
-            var problemSort = 1;
-            var incidentSort = 1;
-            var relatedProblemNum = "";
-
-            //Build Problem and Incident RelationShip
+            #region Not adding related incidents to a problem
+            //Build Problem and Incident RelationShip //comment out by Mag - Final decision to not include related incidents to a problem ticket
+            /*
+              var incidentSort = 1;            
+              var problemSort = 1;
+              var relatedProblemNum = "";
             foreach (var p in problemList)
             {
                 // Set Problem Sort Order
@@ -281,7 +287,8 @@ namespace ServiceNowNewsAndNotificationsAPI
                     p.Incidents.AddRange(relatedIncs);
                 }
             }
-
+            */
+            #endregion
 
             if (problemList.Count <= 0)
             {
@@ -306,7 +313,7 @@ namespace ServiceNowNewsAndNotificationsAPI
             return problemList;
         }
 
-        public List<Knowledge> GetNews(string kbData)
+        public List<Knowledge> NewsDataMassage(string kbData)
         {
             JObject kbObj = JObject.Parse(kbData);
             JArray kbResultSets = (JArray)kbObj["result"];
@@ -384,7 +391,7 @@ namespace ServiceNowNewsAndNotificationsAPI
             return kbList;
         }
 
-        public List<Change> GetChanges(string ChangeData)
+        public List<Change> ChageDataMassage(string ChangeData)
         {
             JObject ChangeObj = JObject.Parse(ChangeData);
             JArray ChangeResultSets = (JArray)ChangeObj["result"];
