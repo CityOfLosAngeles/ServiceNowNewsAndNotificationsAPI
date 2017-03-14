@@ -110,10 +110,14 @@ namespace ServiceNowNewsAndNotificationsAPI
                     inc.CreatedDt = incCreatedDate; //open date
                     //inc.OutageStartDt = outageStartDate;
                     //inc.OutageStartTm = outageStartTime;
-                    dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));
-                    if (problemIdValue != null)
+                    //dynamic problemIdValue = JsonConvert.DeserializeObject(Convert.ToString(rec["problem_id"]));                    
+                    if (rec["problem_id"] != null)
                     {
-                        inc.ProblemId = problemIdValue.value; //Convert.ToString(rec["problem_id"]); //problem sysid
+                        var problemSysId = Regex.Match(rec["problem_id"].SelectToken("link").ToString(),
+                                           string.Format("{0}/problem/(.+)", ConfigurationManager.AppSettings["APIGenericURL"]),
+                                           RegexOptions.Singleline).Groups[1].Value;
+                        inc.ProblemId = problemSysId;  //problem sysid
+
                         inc.ProblemLink = "https://cityoflaprod.service-now.com/nav_to.do?uri=problem.do?sys_id=" + inc.ProblemId;
                     }
                     else
@@ -319,8 +323,7 @@ namespace ServiceNowNewsAndNotificationsAPI
                     continue;
 
                 if (kbItem["kb_knowledge_base"] != null)
-                {
-                    //knowledgeBaseSysId = kbItem["kb_knowledge_base"].SelectToken("value").ToString();
+                {                    
                     var knowledgeBaseURL = kbItem["kb_knowledge_base"].SelectToken("link").ToString();
                     knowledgeBaseSysId = Regex.Match(knowledgeBaseURL,
                                        string.Format("{0}/kb_knowledge_base/(.+)", ConfigurationManager.AppSettings["APIGenericURL"]),
@@ -415,20 +418,18 @@ namespace ServiceNowNewsAndNotificationsAPI
                 {
                     chgEndDate = Convert.ToDateTime(ChangeItem["u_chg_outage_end"]);
                 }
-
-                // TODO: Test logic for filtering planned outages
+                
                 if (chgApprovalStatus == "Approved" && (chgState == "Ready" || chgState == "Work In Progress" ||
                     chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled"))
                 {
                    
-                    var dateDiff = (chgOutageEndDT != "") ? (DateTime.Now - chgEndDate).TotalDays : 10;
-                    if ((chgOutageEndDT == "" || dateDiff <= 1) ||
-                        ((chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled") && dateDiff <= 1))
+                    var dateDiff = (chgOutageEndDT != "") ? (DateTime.Now - chgEndDate).TotalDays : 10;                    
+                    if ((chgOutageEndDT == "" || dateDiff <= 1))                        
                     {
                         change.ChangeNumber = Convert.ToString(ChangeItem["number"]).Trim();
                         change.ChangeOutageStartDT = chgOutageStartDT;
                         change.ChangeOutageEndDT = chgOutageEndDT;
-                        if (change.ChangeOutageEndDT != string.Empty)
+                        if ((chgState == "Completed" || chgState == "Failed" || chgState == "Cancelled") && dateDiff >= 0 && dateDiff < 10) //only show system available when only outage has been ended within 24 hours
                         {
                             change.ChangeApprovalStatus = "System AVAILABLE";
                         }
