@@ -20,22 +20,21 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
         {
             try
             {
-                //Incident URL
-                
-                string incidentURL = ConfigurationManager.AppSettings["IncidentcURL"];
+                //Incident URL                
+                //string incidentURL = ConfigurationManager.AppSettings["IncidentcURL"];
 
-                //Problem URL
-                
+                //Problem URL                
                 string problemURL = ConfigurationManager.AppSettings["ProblemcUrl"];
-                // Incident Connection
-                ServiceNowRequest webRequest = new ServiceNowRequest(incidentURL, "GET");
-                var incidentData = webRequest.GetResponse();
 
-                webRequest = new ServiceNowRequest(problemURL, "GET");
+                // Incident Connection
+                //ServiceNowRequest webRequest = new ServiceNowRequest(incidentURL, "GET");
+                //var incidentData = webRequest.GetResponse();
+
+                ServiceNowRequest webRequest = new ServiceNowRequest(problemURL, "GET");
                 var problemData = webRequest.GetResponse();
 
                 var getData = new ProcessData();
-                var list = getData.DataMassage(incidentData, problemData);              
+                var list = getData.ProblemDataMassage(problemData);              
 
                 return Request.CreateResponse(HttpStatusCode.OK, list);         
             }
@@ -60,7 +59,7 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
                 var kbData = webRequest.GetResponse();                
 
                 var getData = new ProcessData();
-                var list = getData.GetNews(kbData);              
+                var list = getData.NewsDataMassage(kbData);              
 
                 return Request.CreateResponse(HttpStatusCode.OK, list);         
             }
@@ -85,7 +84,7 @@ namespace ServiceNowNewsAndNotificationsAPI.Controllers
                 var ChangeData = webRequest.GetResponse();
 
                 var getData = new ProcessData();
-                var list = getData.GetChanges(ChangeData);
+                var list = getData.ChageDataMassage(ChangeData);
 
                 return Request.CreateResponse(HttpStatusCode.OK, list);
             }
