@@ -35,8 +35,8 @@ namespace ServiceNowNewsAndNotificationsAPI
             request.Method = WebRequestMethods.Http.Get;
             request.Accept = "application/json";
 
-            string userName = "readonlyservice";
-            string password = "ServiceNow";
+            string userName = "";
+            string password = "";
             string encoded = System.Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(userName + ":" + password));
             request.Headers.Add("Authorization", "Basic " + encoded);
 
